@@ -1,0 +1,14 @@
+{
+  "name": "myers-diff",
+  "version": "1.0.0",
+  "description": "A from-scratch implementation of Myers' O(ND) diff algorithm, with line/word/char level diffing, a unified-diff CLI, and an interactive browser demo.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
