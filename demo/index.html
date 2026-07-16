@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>myers-diff demo</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --ins-bg: #033a16;
+    --ins-fg: #7ee787;
+    --del-bg: #67060c;
+    --del-fg: #ffa198;
+    --mark-ins: #2ea04366;
+    --mark-del: #f8514966;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.subtitle { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+  .inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .input-col label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  textarea {
+    width: 100%;
+    height: 220px;
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    resize: vertical;
+  }
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  button {
+    background: #238636;
+    color: white;
+    border: 1px solid rgba(240,246,252,0.1);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:hover { background: #2ea043; }
+  select, .mode-toggle {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+  .stats { color: var(--muted); font-size: 13px; }
+  #output {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: auto;
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .line { padding: 1px 10px; white-space: pre-wrap; word-break: break-all; }
+  .ins-line { background: var(--ins-bg); color: var(--ins-fg); }
+  .del-line { background: var(--del-bg); color: var(--del-fg); }
+  .eq-line { color: var(--text); }
+  mark.ins { background: var(--mark-ins); color: inherit; border-radius: 2px; }
+  mark.del { background: var(--mark-del); color: inherit; border-radius: 2px; }
+  footer { margin-top: 20px; color: var(--muted); font-size: 12px; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+  <h1>myers-diff</h1>
+  <p class="subtitle">
+    Paste two texts and diff them with a from-scratch implementation of Myers' O(ND) shortest-edit-script algorithm.
+  </p>
+
+  <div class="inputs">
+    <div class="input-col">
+      <label for="textA">Before</label>
+      <textarea id="textA" spellcheck="false">function greet(name) {
+  console.log("Hello, " + name);
+  return true;
+}</textarea>
+    </div>
+    <div class="input-col">
+      <label for="textB">After</label>
+      <textarea id="textB" spellcheck="false">function greet(name, greeting) {
+  console.log(greeting + ", " + name + "!");
+  return true;
+}</textarea>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="diffBtn">Diff</button>
+    <span class="stats" id="stats"></span>
+  </div>
+
+  <div id="output"></div>
+
+  <footer>
+    Runs entirely client-side, no build step: <code>src/diff.js</code> is loaded directly as an ES module.
+    See the repository README for how the algorithm works.
+  </footer>
+
+<script type="module">
+  import { diffLines } from '../src/diff.js';
+  import { toHtml } from '../src/format.js';
+
+  const textA = document.getElementById('textA');
+  const textB = document.getElementById('textB');
+  const output = document.getElementById('output');
+  const stats = document.getElementById('stats');
+  const btn = document.getElementById('diffBtn');
+
+  function render() {
+    const ops = diffLines(textA.value, textB.value);
+    output.innerHTML = toHtml(ops);
+
+    const added = ops.filter(o => o.type === 'insert')
+      .reduce((n, o) => n + o.value.split('\n').filter((l,i,a)=> !(i===a.length-1 && l==='')).length, 0);
+    const removed = ops.filter(o => o.type === 'delete')
+      .reduce((n, o) => n + o.value.split('\n').filter((l,i,a)=> !(i===a.length-1 && l==='')).length, 0);
+    stats.textContent = `+${added} -${removed}`;
+  }
+
+  btn.addEventListener('click', render);
+  textA.addEventListener('input', render);
+  textB.addEventListener('input', render);
+  render();
+</script>
+</body>
+</html>
